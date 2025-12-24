@@ -1,15 +1,9 @@
-<!DOCTYPE html>
-<html lang="nl">
+<!DOCTYPE html><html lang="nl">
 <head>
   <meta charset="UTF-8">
-  <title>Cyclus & Gevoelens</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- PWA basis -->
-  <meta name="theme-color" content="#ec4899">
-  <link rel="manifest" href="manifest.json">
-
-  <style>
+  <title>Bloody Mary</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">  <!-- PWA basis -->  <meta name="theme-color" content="#ec4899">
+  <link rel="manifest" href="manifest.json">  <style>
     body {
       font-family: Arial, sans-serif;
       background: #fff1f2;
@@ -54,46 +48,34 @@
       font-size: 12px;
       color: #555;
     }
-  </style>
-</head>
-
-<body>
-
-<h1>🌸 Cyclus & Gevoelens</h1>
+  </style></head><body><h1>🌸 Cyclus & Gevoelens</h1>
 <p class="small">
   Educatieve en ondersteunende app – geen medische of diagnostische toepassing.
-</p>
-
-<div class="card">
+</p><div class="card">
   <label>Start menstruatie</label>
-  <input type="date" id="start">
+  <input type="date" id="start"><label>Einde menstruatie</label> <input type="date" id="end">
 
-  <label>Einde menstruatie</label>
-  <input type="date" id="end">
+<label>Gevoelens</label> <select id="mood"> <option value="">Kies…</option> <option>Rustig</option> <option>Emotioneel</option> <option>Prikkelbaar</option> <option>Energiek</option> <option>Somber</option> </select>
 
-  <label>Gevoelens</label>
-  <select id="mood">
-    <option value="">Kies…</option>
-    <option>Rustig</option>
-    <option>Emotioneel</option>
-    <option>Prikkelbaar</option>
-    <option>Energiek</option>
-    <option>Somber</option>
-  </select>
+<label>Notities</label>
 
-  <label>Notities</label>
-  <textarea id="notes" rows="3"></textarea>
+  <textarea id="notes" rows="3"></textarea><button onclick="saveEntry()">Opslaan</button>
 
-  <button onclick="saveEntry()">Opslaan</button>
-</div>
-
-<div class="card">
+</div><div class="card">
+  <h3>🌙 Huidige fase & voorspelling</h3>
+  <div id="cycle-info">Nog geen startdatum ingevuld.</div>
+</div><div class="card">
   <h3>Geschiedenis</h3>
   <div id="history"></div>
-</div>
-
-<script>
+</div><script>
   const STORAGE_KEY = "cyclus_data";
+
+  const PHASES = [
+    { name: "Menstruatie", startDay: 1, endDay: 5, info: "Vermoeidheid kan toenemen, rust nodig, emoties wisselend." },
+    { name: "Folliculaire fase", startDay: 6, endDay: 13, info: "Energie neemt toe, concentratie beter, goed voor nieuwe projecten." },
+    { name: "Ovulatie", startDay: 14, endDay: 16, info: "Meestal energiek, sociaal, hormonale piek, verhoogd libido." },
+    { name: "Luteale fase", startDay: 17, endDay: 28, info: "Soms prikkelbaar, emotioneel, craving, voorbereiding op menstruatie." }
+  ];
 
   function loadEntries() {
     return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
@@ -123,6 +105,7 @@
     notes.value = "";
 
     render();
+    getCycleInfo();
   }
 
   function render() {
@@ -147,12 +130,38 @@
     });
   }
 
+  function getCycleInfo() {
+    const data = loadEntries();
+    if (data.length === 0) {
+      document.getElementById("cycle-info").innerText = "Nog geen startdatum ingevuld.";
+      return;
+    }
+
+    const lastEntry = data[0];
+    const startDate = new Date(lastEntry.start);
+    const today = new Date();
+    const diffTime = today - startDate;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    const dayInCycle = ((diffDays - 1) % 28) + 1;
+
+    const phase = PHASES.find(p => dayInCycle >= p.startDay && dayInCycle <= p.endDay);
+
+    const nextPeriod = new Date(startDate);
+    nextPeriod.setDate(nextPeriod.getDate() + 28);
+
+    document.getElementById("cycle-info").innerHTML = `
+      Vandaag: dag ${dayInCycle} van je cyclus<br>
+      Fase: <strong>${phase.name}</strong><br>
+      Info: ${phase.info}<br>
+      Verwachte volgende menstruatie: ${nextPeriod.toLocaleDateString()}
+    `;
+  }
+
   render();
-</script>
-<script>
+  getCycleInfo();
+</script><script>
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("service-worker.js");
   }
-</script>
-</body>
+</script></body>
 </html>
