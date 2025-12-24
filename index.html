@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <title>Cyclus & Gevoelens</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- PWA basis -->
+  <meta name="theme-color" content="#ec4899">
+  <link rel="manifest" href="manifest.json">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #fff1f2;
+      margin: 0;
+      padding: 16px;
+    }
+    h1 {
+      color: #be185d;
+    }
+    .card {
+      background: white;
+      padding: 16px;
+      border-radius: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    label {
+      font-size: 14px;
+      display: block;
+      margin-top: 8px;
+    }
+    input, select, textarea, button {
+      width: 100%;
+      padding: 8px;
+      margin-top: 4px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background: #ec4899;
+      color: white;
+      border: none;
+      margin-top: 12px;
+      font-size: 16px;
+    }
+    .entry {
+      border-left: 4px solid #ec4899;
+      padding-left: 8px;
+      margin-bottom: 8px;
+    }
+    .small {
+      font-size: 12px;
+      color: #555;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>🌸 Cyclus & Gevoelens</h1>
+<p class="small">
+  Educatieve en ondersteunende app – geen medische of diagnostische toepassing.
+</p>
+
+<div class="card">
+  <label>Start menstruatie</label>
+  <input type="date" id="start">
+
+  <label>Einde menstruatie</label>
+  <input type="date" id="end">
+
+  <label>Gevoelens</label>
+  <select id="mood">
+    <option value="">Kies…</option>
+    <option>Rustig</option>
+    <option>Emotioneel</option>
+    <option>Prikkelbaar</option>
+    <option>Energiek</option>
+    <option>Somber</option>
+  </select>
+
+  <label>Notities</label>
+  <textarea id="notes" rows="3"></textarea>
+
+  <button onclick="saveEntry()">Opslaan</button>
+</div>
+
+<div class="card">
+  <h3>Geschiedenis</h3>
+  <div id="history"></div>
+</div>
+
+<script>
+  const STORAGE_KEY = "cyclus_data";
+
+  function loadEntries() {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+  }
+
+  function saveEntry() {
+    const entry = {
+      id: Date.now(),
+      start: start.value,
+      end: end.value,
+      mood: mood.value,
+      notes: notes.value
+    };
+
+    if (!entry.start) {
+      alert("Startdatum is verplicht");
+      return;
+    }
+
+    const data = loadEntries();
+    data.unshift(entry);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
+    start.value = "";
+    end.value = "";
+    mood.value = "";
+    notes.value = "";
+
+    render();
+  }
+
+  function render() {
+    const history = document.getElementById("history");
+    const data = loadEntries();
+    history.innerHTML = "";
+
+    if (data.length === 0) {
+      history.innerHTML = "<p class='small'>Nog geen gegevens opgeslagen.</p>";
+      return;
+    }
+
+    data.forEach(e => {
+      const div = document.createElement("div");
+      div.className = "entry";
+      div.innerHTML = `
+        <strong>🩸 ${e.start} → ${e.end || "?"}</strong><br>
+        💭 ${e.mood || "—"}<br>
+        <span class="small">${e.notes || ""}</span>
+      `;
+      history.appendChild(div);
+    });
+  }
+
+  render();
+</script>
+
+</body>
+</html>
