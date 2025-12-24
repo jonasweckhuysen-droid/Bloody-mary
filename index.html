@@ -58,16 +58,17 @@
       border-radius: 50%;
       font-size: 12px;
       color: white;
+      cursor: pointer;
     }
   </style></head>
 <body><h1>🌸 Cyclus & Gevoelens</h1>
-<p class="small">
-  Educatieve en ondersteunende app – geen medische of diagnostische toepassing.
-</p><div class="card">
+<p class="small">Educatieve en ondersteunende app – geen medische of diagnostische toepassing.</p><div class="card">
   <label>Start menstruatie</label>
   <input type="date" id="start">
   <label>Einde menstruatie</label>
   <input type="date" id="end"><label>Gevoelens</label> <select id="mood"> <option value="">Kies…</option> <option>Rustig</option> <option>Emotioneel</option> <option>Prikkelbaar</option> <option>Energiek</option> <option>Somber</option> </select>
+
+<label>Fysieke symptomen</label> <select id="symptom"> <option value="">Geen</option> <option>Buikpijn</option> <option>Hoofdpijn</option> <option>Vermoeidheid</option> <option>Craving</option> </select>
 
 <label>Notities</label>
 
@@ -80,16 +81,19 @@
   <h3>📅 Cycluskalender</h3>
   <div id="cycle-calendar"></div>
 </div><div class="card">
+  <h3>📊 Statistieken & Educatieve Inzichten</h3>
+  <div id="stats">Nog geen gegevens beschikbaar.</div>
+</div><div class="card">
   <h3>Geschiedenis</h3>
   <div id="history"></div>
 </div><script>
   const STORAGE_KEY = "cyclus_data";
 
   const PHASES = [
-    { name: "Menstruatie", startDay: 1, endDay: 5, info: "Vermoeidheid kan toenemen, rust nodig, emoties wisselend. Extra: warmtekussen, lichte beweging." },
-    { name: "Folliculaire fase", startDay: 6, endDay: 13, info: "Energie neemt toe, concentratie beter, goed voor nieuwe projecten. Tip: plan activiteiten en sociale interactie." },
-    { name: "Ovulatie", startDay: 14, endDay: 16, info: "Meestal energiek, sociaal, hormonale piek, verhoogd libido. Tip: optimale dagen voor teamwork en sport." },
-    { name: "Luteale fase", startDay: 17, endDay: 28, info: "Soms prikkelbaar, emotioneel, craving, voorbereiding op menstruatie. Tip: self-care, mindfulness, ontspanningsoefeningen." }
+    { name: "Menstruatie", startDay: 1, endDay: 5, info: "Vermoeidheid kan toenemen, rust nodig, emoties wisselend. Warmtekussen, lichte beweging." },
+    { name: "Folliculaire fase", startDay: 6, endDay: 13, info: "Energie neemt toe, concentratie beter, goed voor nieuwe projecten. Plan activiteiten en sociale interactie." },
+    { name: "Ovulatie", startDay: 14, endDay: 16, info: "Meestal energiek, sociaal, hormonale piek, verhoogd libido. Optimale dagen voor teamwork en sport." },
+    { name: "Luteale fase", startDay: 17, endDay: 28, info: "Soms prikkelbaar, emotioneel, craving, voorbereiding op menstruatie. Self-care, mindfulness, ontspanningsoefeningen." }
   ];
 
   function loadEntries() {
@@ -102,26 +106,22 @@
       start: start.value,
       end: end.value,
       mood: mood.value,
+      symptom: symptom.value,
       notes: notes.value
     };
 
-    if (!entry.start) {
-      alert("Startdatum is verplicht");
-      return;
-    }
+    if (!entry.start) { alert("Startdatum is verplicht"); return; }
 
     const data = loadEntries();
     data.unshift(entry);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 
-    start.value = "";
-    end.value = "";
-    mood.value = "";
-    notes.value = "";
+    start.value = mood.value = symptom.value = notes.value = "";
 
     render();
     getCycleInfo();
     renderCalendar();
+    renderStats();
   }
 
   function render() {
@@ -129,10 +129,7 @@
     const data = loadEntries();
     history.innerHTML = "";
 
-    if (data.length === 0) {
-      history.innerHTML = "<p class='small'>Nog geen gegevens opgeslagen.</p>";
-      return;
-    }
+    if (data.length === 0) { history.innerHTML = "<p class='small'>Nog geen gegevens opgeslagen.</p>"; return; }
 
     data.forEach(e => {
       const div = document.createElement("div");
@@ -140,7 +137,8 @@
       div.innerHTML = `
         <strong>🩸 ${e.start} → ${e.end || "?"}</strong><br>
         💭 ${e.mood || "—"}<br>
-        <span class="small">${e.notes || ""}</span>
+        ⚕️ ${e.symptom || "—"}<br>
+        <span class='small'>${e.notes || ""}</span>
       `;
       history.appendChild(div);
     });
@@ -148,22 +146,16 @@
 
   function getCycleInfo() {
     const data = loadEntries();
-    if (data.length === 0) {
-      document.getElementById("cycle-info").innerText = "Nog geen startdatum ingevuld.";
-      return;
-    }
+    if (data.length === 0) { document.getElementById("cycle-info").innerText = "Nog geen startdatum ingevuld."; return; }
 
     const lastEntry = data[0];
     const startDate = new Date(lastEntry.start);
     const today = new Date();
-    const diffTime = today - startDate;
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    const diffDays = Math.floor((today - startDate) / (1000 * 60 * 60 * 24)) + 1;
     const dayInCycle = ((diffDays - 1) % 28) + 1;
 
     const phase = PHASES.find(p => dayInCycle >= p.startDay && dayInCycle <= p.endDay);
-
-    const nextPeriod = new Date(startDate);
-    nextPeriod.setDate(nextPeriod.getDate() + 28);
+    const nextPeriod = new Date(startDate); nextPeriod.setDate(nextPeriod.getDate() + 28);
 
     document.getElementById("cycle-info").innerHTML = `
       Vandaag: dag ${dayInCycle} van je cyclus<br>
@@ -176,16 +168,11 @@
   function renderCalendar() {
     const calendar = document.getElementById("cycle-calendar");
     const data = loadEntries();
-    if (data.length === 0) {
-      calendar.innerHTML = "<p class='small'>Nog geen startdatum ingevuld.</p>";
-      return;
-    }
+    if (data.length === 0) { calendar.innerHTML = "<p class='small'>Nog geen startdatum ingevuld.</p>"; return; }
 
-    const startDate = new Date(data[0].start);
     calendar.innerHTML = "";
-
     for (let i = 1; i <= 28; i++) {
-      let phase = PHASES.find(p => i >= p.startDay && i <= p.endDay);
+      const phase = PHASES.find(p => i >= p.startDay && i <= p.endDay);
       const dayDiv = document.createElement("div");
       dayDiv.className = "calendar-day";
       dayDiv.style.backgroundColor = getPhaseColor(phase.name);
@@ -195,22 +182,34 @@
     }
   }
 
+  function renderStats() {
+    const data = loadEntries();
+    if (data.length === 0) { document.getElementById("stats").innerHTML = "Nog geen gegevens beschikbaar."; return; }
+
+    const moods = {}, symptoms = {};
+    data.forEach(e => { if(e.mood) moods[e.mood] = (moods[e.mood]||0)+1; if(e.symptom) symptoms[e.symptom] = (symptoms[e.symptom]||0)+1; });
+
+    let moodStr = Object.entries(moods).map(([k,v])=>`${k}: ${v} dag(en)`).join('<br>');
+    let symptomStr = Object.entries(symptoms).map(([k,v])=>`${k}: ${v} dag(en)`).join('<br>');
+
+    document.getElementById("stats").innerHTML = `
+      <strong>Emotiepatroon:</strong><br>${moodStr || 'Geen'}<br>
+      <strong>Symptomenpatroon:</strong><br>${symptomStr || 'Geen'}
+    `;
+  }
+
   function getPhaseColor(name) {
-    switch(name) {
-      case "Menstruatie": return "#f87171"; // rood
-      case "Folliculaire fase": return "#fbbf24"; // geel
-      case "Ovulatie": return "#34d399"; // groen
-      case "Luteale fase": return "#60a5fa"; // blauw
+    switch(name){
+      case "Menstruatie": return "#f87171";
+      case "Folliculaire fase": return "#fbbf24";
+      case "Ovulatie": return "#34d399";
+      case "Luteale fase": return "#60a5fa";
       default: return "#ccc";
     }
   }
 
-  render();
-  getCycleInfo();
-  renderCalendar();
+  render(); getCycleInfo(); renderCalendar(); renderStats();
 </script><script>
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("service-worker.js");
-  }
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("service-worker.js");
 </script></body>
 </html>
