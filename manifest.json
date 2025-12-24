@@ -1,11 +1,12 @@
 {
-  "name": "Cyclus & Gevoelens",
-  "short_name": "Cyclus",
-  "description": "Privé menstruatie- en gevoels­tracker (educatief, geen diagnose)",
-  "start_url": "./index.html",
+  "name": "Bloody Mary",
+  "short_name": "CyclusApp",
+  "description": "Educatieve cyclus- en gevoelenstracker",
+  "start_url": ".",
   "display": "standalone",
   "background_color": "#fff1f2",
   "theme_color": "#ec4899",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "icon-192.png",
