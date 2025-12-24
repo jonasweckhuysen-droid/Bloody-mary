@@ -1,6 +1,6 @@
 {
   "name": "Bloody Mary",
-  "short_name": "CyclusApp",
+  "short_name": "Bloody Mary",
   "description": "Educatieve cyclus- en gevoelenstracker",
   "start_url": ".",
   "display": "standalone",
