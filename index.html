@@ -1,9 +1,15 @@
-<!DOCTYPE html><html lang="nl">
+<!DOCTYPE html>
+<html lang="nl">
 <head>
   <meta charset="UTF-8">
   <title>Bloody Mary</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">  <!-- PWA basis -->  <meta name="theme-color" content="#ec4899">
-  <link rel="manifest" href="manifest.json">  <style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- PWA basis -->
+  <meta name="theme-color" content="#ec4899">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+
+  <style>
     body {
       font-family: Arial, sans-serif;
       background: #fff1f2;
@@ -38,6 +44,7 @@
       border: none;
       margin-top: 12px;
       font-size: 16px;
+      cursor: pointer;
     }
     .entry {
       border-left: 4px solid #ec4899;
@@ -60,156 +67,219 @@
       color: white;
       cursor: pointer;
     }
-  </style></head>
-<body><h1>🌸 Cyclus & Gevoelens</h1>
-<p class="small">Educatieve en ondersteunende app</p><div class="card">
+    .today {
+      border: 2px solid #ec4899;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🌸 Cyclus & Gevoelens</h1>
+<p class="small">Educatieve en ondersteunende app – geen medische toepassing</p>
+
+<div class="card">
   <label>Start menstruatie</label>
   <input type="date" id="start">
   <label>Einde menstruatie</label>
-  <input type="date" id="end"><label>Gevoelens</label> <select id="mood"> <option value="">Kies…</option> <option>Rustig</option> <option>Emotioneel</option> <option>Prikkelbaar</option> <option>Energiek</option> <option>Somber</option> </select>
+  <input type="date" id="end">
 
-<label>Fysieke symptomen</label> <select id="symptom"> <option value="">Geen</option> <option>Buikpijn</option> <option>Hoofdpijn</option> <option>Vermoeidheid</option> <option>Craving</option> </select>
+  <label>Gevoelens</label>
+  <select id="mood">
+    <option value="">Kies…</option>
+    <option>Rustig</option>
+    <option>Emotioneel</option>
+    <option>Prikkelbaar</option>
+    <option>Energiek</option>
+    <option>Somber</option>
+  </select>
 
-<label>Notities</label>
+  <label>Fysieke symptomen</label>
+  <select id="symptom">
+    <option value="">Geen</option>
+    <option>Buikpijn</option>
+    <option>Hoofdpijn</option>
+    <option>Vermoeidheid</option>
+    <option>Craving</option>
+  </select>
 
-  <textarea id="notes" rows="3"></textarea><button onclick="saveEntry()">Opslaan</button>
+  <label>Notities</label>
+  <textarea id="notes" rows="3"></textarea>
 
-</div><div class="card">
+  <button onclick="saveEntry()">Opslaan</button>
+</div>
+
+<div class="card">
   <h3>🌙 Huidige fase & voorspelling</h3>
   <div id="cycle-info">Nog geen startdatum ingevuld.</div>
-</div><div class="card">
+</div>
+
+<div class="card">
   <h3>📅 Cycluskalender</h3>
   <div id="cycle-calendar"></div>
-</div><div class="card">
+</div>
+
+<div class="card">
   <h3>📊 Statistieken & Educatieve Inzichten</h3>
   <div id="stats">Nog geen gegevens beschikbaar.</div>
-</div><div class="card">
+</div>
+
+<div class="card">
   <h3>Geschiedenis</h3>
   <div id="history"></div>
-</div><script>
-  const STORAGE_KEY = "cyclus_data";
+</div>
 
-  const PHASES = [
-    { name: "Menstruatie", startDay: 1, endDay: 5, info: "Vermoeidheid kan toenemen, rust nodig, emoties wisselend. Warmtekussen, lichte beweging." },
-    { name: "Folliculaire fase", startDay: 6, endDay: 13, info: "Energie neemt toe, concentratie beter, goed voor nieuwe projecten. Plan activiteiten en sociale interactie." },
-    { name: "Ovulatie", startDay: 14, endDay: 16, info: "Meestal energiek, sociaal, hormonale piek, verhoogd libido. Optimale dagen voor teamwork en sport." },
-    { name: "Luteale fase", startDay: 17, endDay: 28, info: "Soms prikkelbaar, emotioneel, craving, voorbereiding op menstruatie. Self-care, mindfulness, ontspanningsoefeningen." }
-  ];
+<script>
+const STORAGE_KEY = "cyclus_data";
 
-  function loadEntries() {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+const PHASES = [
+  { name: "Menstruatie", startDay: 1, endDay: 5, info: "Vermoeidheid kan toenemen, rust nodig, emoties wisselend. Warmtekussen, lichte beweging." },
+  { name: "Folliculaire fase", startDay: 6, endDay: 13, info: "Energie neemt toe, concentratie beter, goed voor nieuwe projecten. Plan activiteiten en sociale interactie." },
+  { name: "Ovulatie", startDay: 14, endDay: 16, info: "Meestal energiek, sociaal, hormonale piek, verhoogd libido. Optimale dagen voor teamwork en sport." },
+  { name: "Luteale fase", startDay: 17, endDay: 28, info: "Soms prikkelbaar, emotioneel, craving, voorbereiding op menstruatie. Self-care, mindfulness, ontspanningsoefeningen." }
+];
+
+function loadEntries() {
+  return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+}
+
+function saveEntry() {
+  const entry = {
+    id: Date.now(),
+    start: start.value,
+    end: end.value,
+    mood: mood.value,
+    symptom: symptom.value,
+    notes: notes.value
+  };
+
+  if (!entry.start) { alert("Startdatum is verplicht"); return; }
+
+  const data = loadEntries();
+  data.unshift(entry);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+
+  // Reset alleen de invoervelden, niet start/end
+  mood.value = symptom.value = notes.value = "";
+
+  render();
+  getCycleInfo();
+  renderCalendar();
+  renderStats();
+}
+
+function render() {
+  const history = document.getElementById("history");
+  const data = loadEntries();
+  history.innerHTML = "";
+
+  if (data.length === 0) { history.innerHTML = "<p class='small'>Nog geen gegevens opgeslagen.</p>"; return; }
+
+  data.forEach(e => {
+    const div = document.createElement("div");
+    div.className = "entry";
+    div.innerHTML = `
+      <strong>🩸 ${e.start} → ${e.end || "?"}</strong><br>
+      💭 ${e.mood || "—"}<br>
+      ⚕️ ${e.symptom || "—"}<br>
+      <span class='small'>${e.notes || ""}</span>
+    `;
+    history.appendChild(div);
+  });
+}
+
+function getCycleInfo() {
+  const data = loadEntries();
+  if (data.length === 0) { document.getElementById("cycle-info").innerText = "Nog geen startdatum ingevuld."; return; }
+
+  const lastEntry = data[0];
+  const startDate = new Date(lastEntry.start);
+  const today = new Date();
+  const diffDays = Math.floor((today - startDate) / (1000*60*60*24)) + 1;
+  const dayInCycle = ((diffDays - 1) % 28) + 1;
+
+  const phase = PHASES.find(p => dayInCycle >= p.startDay && dayInCycle <= p.endDay);
+  const nextPeriod = new Date(startDate);
+  nextPeriod.setDate(nextPeriod.getDate() + 28);
+
+  document.getElementById("cycle-info").innerHTML = `
+    Vandaag: dag ${dayInCycle} van je cyclus<br>
+    Fase: <strong>${phase.name}</strong><br>
+    Info: ${phase.info}<br>
+    Verwachte volgende menstruatie: ${nextPeriod.toLocaleDateString()}
+  `;
+}
+
+function renderCalendar() {
+  const calendar = document.getElementById("cycle-calendar");
+  const data = loadEntries();
+  if (data.length === 0) { calendar.innerHTML = "<p class='small'>Nog geen startdatum ingevuld.</p>"; return; }
+
+  const startDate = new Date(data[0].start);
+  const today = new Date();
+  const currentDayInCycle = ((Math.floor((today - startDate)/(1000*60*60*24))) % 28) + 1;
+
+  calendar.innerHTML = "";
+  for (let i = 1; i <= 28; i++) {
+    const phase = PHASES.find(p => i >= p.startDay && i <= p.endDay);
+    const dayDiv = document.createElement("div");
+    dayDiv.className = "calendar-day";
+    dayDiv.style.backgroundColor = getPhaseColor(phase.name);
+    dayDiv.title = `Dag ${i}: ${phase.name}`;
+    dayDiv.innerText = i;
+    if(i === currentDayInCycle) dayDiv.classList.add("today");
+    calendar.appendChild(dayDiv);
   }
+}
 
-  function saveEntry() {
-    const entry = {
-      id: Date.now(),
-      start: start.value,
-      end: end.value,
-      mood: mood.value,
-      symptom: symptom.value,
-      notes: notes.value
-    };
+function renderStats() {
+  const data = loadEntries();
+  if(data.length === 0){ document.getElementById("stats").innerHTML="Nog geen gegevens beschikbaar."; return; }
 
-    if (!entry.start) { alert("Startdatum is verplicht"); return; }
+  const moods = {}, symptoms = {}, phaseCounts = {};
+  const startDate = new Date(data[0].start);
 
-    const data = loadEntries();
-    data.unshift(entry);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  data.forEach(e => {
+    if(e.mood) moods[e.mood] = (moods[e.mood]||0)+1;
+    if(e.symptom) symptoms[e.symptom] = (symptoms[e.symptom]||0)+1;
 
-    start.value = mood.value = symptom.value = notes.value = "";
-
-    render();
-    getCycleInfo();
-    renderCalendar();
-    renderStats();
-  }
-
-  function render() {
-    const history = document.getElementById("history");
-    const data = loadEntries();
-    history.innerHTML = "";
-
-    if (data.length === 0) { history.innerHTML = "<p class='small'>Nog geen gegevens opgeslagen.</p>"; return; }
-
-    data.forEach(e => {
-      const div = document.createElement("div");
-      div.className = "entry";
-      div.innerHTML = `
-        <strong>🩸 ${e.start} → ${e.end || "?"}</strong><br>
-        💭 ${e.mood || "—"}<br>
-        ⚕️ ${e.symptom || "—"}<br>
-        <span class='small'>${e.notes || ""}</span>
-      `;
-      history.appendChild(div);
-    });
-  }
-
-  function getCycleInfo() {
-    const data = loadEntries();
-    if (data.length === 0) { document.getElementById("cycle-info").innerText = "Nog geen startdatum ingevuld."; return; }
-
-    const lastEntry = data[0];
-    const startDate = new Date(lastEntry.start);
-    const today = new Date();
-    const diffDays = Math.floor((today - startDate) / (1000 * 60 * 60 * 24)) + 1;
-    const dayInCycle = ((diffDays - 1) % 28) + 1;
-
+    const diffDays = Math.floor((new Date(e.start) - startDate)/(1000*60*60*24))+1;
+    const dayInCycle = ((diffDays-1)%28)+1;
     const phase = PHASES.find(p => dayInCycle >= p.startDay && dayInCycle <= p.endDay);
-    const nextPeriod = new Date(startDate); nextPeriod.setDate(nextPeriod.getDate() + 28);
+    phaseCounts[phase.name] = (phaseCounts[phase.name]||0)+1;
+  });
 
-    document.getElementById("cycle-info").innerHTML = `
-      Vandaag: dag ${dayInCycle} van je cyclus<br>
-      Fase: <strong>${phase.name}</strong><br>
-      Info: ${phase.info}<br>
-      Verwachte volgende menstruatie: ${nextPeriod.toLocaleDateString()}
-    `;
+  let moodStr = Object.entries(moods).map(([k,v])=>`${k}: ${v} dag(en)`).join('<br>') || "Geen";
+  let symptomStr = Object.entries(symptoms).map(([k,v])=>`${k}: ${v} dag(en)`).join('<br>') || "Geen";
+  let phaseStr = Object.entries(phaseCounts).map(([k,v])=>`${k}: ${v} dag(en)`).join('<br>') || "Geen";
+
+  document.getElementById("stats").innerHTML = `
+    <strong>Emotiepatroon:</strong><br>${moodStr}<br>
+    <strong>Symptomenpatroon:</strong><br>${symptomStr}<br>
+    <strong>Fasepatroon:</strong><br>${phaseStr}
+  `;
+}
+
+function getPhaseColor(name){
+  switch(name){
+    case "Menstruatie": return "#f87171";
+    case "Folliculaire fase": return "#fbbf24";
+    case "Ovulatie": return "#34d399";
+    case "Luteale fase": return "#60a5fa";
+    default: return "#ccc";
   }
+}
 
-  function renderCalendar() {
-    const calendar = document.getElementById("cycle-calendar");
-    const data = loadEntries();
-    if (data.length === 0) { calendar.innerHTML = "<p class='small'>Nog geen startdatum ingevuld.</p>"; return; }
+// Initialisatie
+render();
+getCycleInfo();
+renderCalendar();
+renderStats();
 
-    calendar.innerHTML = "";
-    for (let i = 1; i <= 28; i++) {
-      const phase = PHASES.find(p => i >= p.startDay && i <= p.endDay);
-      const dayDiv = document.createElement("div");
-      dayDiv.className = "calendar-day";
-      dayDiv.style.backgroundColor = getPhaseColor(phase.name);
-      dayDiv.title = `Dag ${i}: ${phase.name}`;
-      dayDiv.innerText = i;
-      calendar.appendChild(dayDiv);
-    }
-  }
+// PWA Service Worker
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("service-worker.js");
+}
+</script>
 
-  function renderStats() {
-    const data = loadEntries();
-    if (data.length === 0) { document.getElementById("stats").innerHTML = "Nog geen gegevens beschikbaar."; return; }
-
-    const moods = {}, symptoms = {};
-    data.forEach(e => { if(e.mood) moods[e.mood] = (moods[e.mood]||0)+1; if(e.symptom) symptoms[e.symptom] = (symptoms[e.symptom]||0)+1; });
-
-    let moodStr = Object.entries(moods).map(([k,v])=>`${k}: ${v} dag(en)`).join('<br>');
-    let symptomStr = Object.entries(symptoms).map(([k,v])=>`${k}: ${v} dag(en)`).join('<br>');
-
-    document.getElementById("stats").innerHTML = `
-      <strong>Emotiepatroon:</strong><br>${moodStr || 'Geen'}<br>
-      <strong>Symptomenpatroon:</strong><br>${symptomStr || 'Geen'}
-    `;
-  }
-
-  function getPhaseColor(name) {
-    switch(name){
-      case "Menstruatie": return "#f87171";
-      case "Folliculaire fase": return "#fbbf24";
-      case "Ovulatie": return "#34d399";
-      case "Luteale fase": return "#60a5fa";
-      default: return "#ccc";
-    }
-  }
-
-  render(); getCycleInfo(); renderCalendar(); renderStats();
-</script><script>
-  if ("serviceWorker" in navigator) navigator.serviceWorker.register("service-worker.js");
-</script></body>
+</body>
 </html>
